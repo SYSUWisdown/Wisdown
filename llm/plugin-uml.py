@@ -30,7 +30,7 @@ HEADERS = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
-
+ 
 data = {
     "model": "qwen/qwq-32b:free",
     "messages": [
@@ -49,12 +49,22 @@ if resp.status_code == 200:
     # 输出到指定文件（不再创建文件夹，由chat.py负责）
     if len(sys.argv) > 1:
         output_path = sys.argv[1]
-        with open(output_path, 'w') as f:
+        # 生成临时uml文件
+        temp_uml_path = output_path + '.temp.puml'
+        with open(temp_uml_path, 'w') as f:
             f.write(uml_text)
         # 自动调用PlantUML渲染图片
         try:
-            subprocess.run(["plantuml", output_path], check=True)
+            subprocess.run(["plantuml", "-tpng", temp_uml_path], check=True)
+            # PlantUML会生成同名png文件
+            png_path = temp_uml_path.replace('.puml', '.png')
+            # 移动到目标图片路径
+            os.replace(png_path, output_path)
         except Exception as e:
             print("PlantUML 渲染失败：", e)
+        finally:
+            # 删除临时uml文件
+            if os.path.exists(temp_uml_path):
+                os.remove(temp_uml_path)
 else:
     print("Error：", resp.status_code, resp.text)
