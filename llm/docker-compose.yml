@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  llm:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - ../ChatBoxDemo/server/chat.db:/app/chat.db:ro
+      - ./.env:/app/.env:ro
+      - ../outputs:/app/plugin_outputs 
+    stdin_open: true
+    tty: true 
