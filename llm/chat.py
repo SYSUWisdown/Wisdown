@@ -67,14 +67,16 @@ async def chat_endpoint(req: ChatRequest):
             output_path = None
             for line in reply.strip().split('\n'):
                 if line.startswith("plugin: plugin-uml"):
-                    output_path = os.path.join(output_dir, f"uml_{timestamp}.txt")
+                    # output_path = os.path.join(output_dir, f"uml_{timestamp}.txt")
+                    output_path = os.path.join(output_dir, "uml", f"uml_{timestamp}.txt")
                     plugin_path = os.path.join(os.path.dirname(__file__), 'plugin-uml.py')
                     try:
                         subprocess.check_output(['python3', plugin_path, output_path], text=True)
                     except Exception as e:
                         pass
                 elif line.startswith("plugin: plugin-md"):
-                    output_path = os.path.join(output_dir, f"md_{timestamp}.md")
+                    # output_path = os.path.join(output_dir, f"md_{timestamp}.md")
+                    output_path = os.path.join(output_dir, "md", f"md_{timestamp}.md")
                     plugin_path = os.path.join(os.path.dirname(__file__), 'plugin-md.py')
                     try:
                         subprocess.check_output(['python3', plugin_path, output_path], text=True)
