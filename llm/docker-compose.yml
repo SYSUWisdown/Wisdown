@@ -3,7 +3,7 @@ services:
   llm:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000"
     restart: always
     volumes:
       - ../chatbox/backend/chat.db:/app/chat.db:ro

@@ -71,7 +71,17 @@ llm = ChatOpenAI(
 response = llm([system_msg, human_msg])
 md_text = response.content
 
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+cursor.execute(
+    "INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)",
+    (1, 'admin', 'md-test.md', md_text)
+)
+conn.commit()
+conn.close()
+
 if len(sys.argv) > 1:
     output_path = sys.argv[1]
     with open(output_path, 'w') as f:
+
         f.write(md_text)
