@@ -71,6 +71,7 @@ llm = ChatOpenAI(
 response = llm([system_msg, human_msg])
 md_text = response.content
 
+# 将生成的markdown内容写入数据库
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 cursor.execute(
@@ -83,5 +84,4 @@ conn.close()
 if len(sys.argv) > 1:
     output_path = sys.argv[1]
     with open(output_path, 'w') as f:
-
         f.write(md_text)
