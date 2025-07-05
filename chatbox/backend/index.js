@@ -62,6 +62,66 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
+// 用于控制轮询频率
+let lastPollTime = 0;
+const messageTimes = [];
+const POLL_INTERVAL = 30 * 1000; // 高频聊天下的轮询间隔
+const MSG_WINDOW_MS = 60 * 1000; // 统计消息频率的时间窗口
+const HIGH_FREQ_COUNT = 5; // 一分钟消息数超过该值视为高频
+
+async function pollLLM() {
+  try {
+    // debug output
+    console.log('开始轮询 LLM 服务...');
+    const pyRes = await axios.post('http://localhost:8001/chat', { action: 'chat' });
+    const { output_path } = pyRes.data;
+    if (output_path) {
+      const content = fs.readFileSync(output_path, 'utf-8');
+      // debug output
+      console.log('LLM 服务返回内容:', content);
+      io.emit('markdown update', content);
+      lastPollTime = Date.now();
+      return;
+    }
+    throw new Error('no output');
+  } catch (e) {
+    try {
+      const listRes = await axios.post('http://localhost:8001/chat', { action: 'list' });
+      const files = listRes.data.files || [];
+      if (files.length) {
+        files.sort((a, b) => {
+          const ta = parseInt(a.match(/_(\d+)\./)?.[1] || 0);
+          const tb = parseInt(b.match(/_(\d+)\./)?.[1] || 0);
+          return tb - ta;
+        });
+        const latest = files[0];
+        const outputPath = `/Users/warblerforest/Projects/Software_Dev/Wisdown/dev/Wisdown_new/Wisdown/outputs/${latest}`;
+        const content = fs.readFileSync(outputPath, 'utf-8');
+        io.emit('markdown update', content);
+        lastPollTime = Date.now();
+      }
+    } catch (err) {
+      console.error('轮询失败:', err.message);
+    }
+  }
+}
+
+function handlePolling() {
+  const now = Date.now();
+  messageTimes.push(now);
+  while (messageTimes.length && now - messageTimes[0] > MSG_WINDOW_MS) {
+    messageTimes.shift();
+  }
+  const highFreq = messageTimes.length > HIGH_FREQ_COUNT;
+  if (highFreq) {
+    if (now - lastPollTime >= POLL_INTERVAL) {
+      pollLLM();
+    }
+  } else {
+    pollLLM();
+  }
+}
+
 app.use(express.json());
 app.use(cors());
 
@@ -158,6 +218,7 @@ io.on('connection', (socket) => {
       db.prepare(
         'INSERT INTO messages (user_id, username, name, content) VALUES (?, ?, ?, ?)'
       ).run(userId, msg.username, messageObj.name, msg.text);
+      handlePolling();
     } catch (e) {
       console.error('消息存储失败:', e.message);
     }
