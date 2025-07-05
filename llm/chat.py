@@ -75,8 +75,10 @@ async def chat_endpoint(req: ChatRequest):
         os.makedirs(output_dir, exist_ok=True)
         timestamp = int(time.time())
         output_path = None
+        print(f"000000")
         for line in reply.strip().split('\n'):      # 目前都是在chat.py中指定文件夹，插件只负责输出到文件夹
             if line.startswith("plugin: plugin-uml"):
+                print(f"444444")
                 output_path = os.path.join(output_dir, "uml", f"uml_{timestamp}.png")
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 plugin_path = os.path.join(os.path.dirname(__file__), 'plugin-uml.py')
@@ -85,6 +87,7 @@ async def chat_endpoint(req: ChatRequest):
                 except Exception as e:
                     pass
             elif line.startswith("plugin: plugin-md"):
+                print(f"333333")
                 output_path = os.path.join(output_dir, "md", f"md_{timestamp}.md")
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 plugin_path = os.path.join(os.path.dirname(__file__), 'plugin-md.py')
