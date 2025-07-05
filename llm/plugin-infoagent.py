@@ -33,8 +33,11 @@ ddg_search = DuckDuckGoSearchAPIWrapper()
 # 2. 百科工具
 wikipedia = WikipediaAPIWrapper()
 
-# 3. 天气工具
-weather = OpenWeatherMapAPIWrapper(openweathermap_api_key=os.getenv("OPENWEATHER_API_KEY"))
+# 3. 天气工具（DuckDuckGo替代）
+# @tool
+# def search_weather(location: str) -> str:
+#     """获取某地天气信息（基于搜索，无需API）"""
+#     return ddg_search.run(f"weather in {location}")
 
 # 4. 时间工具
 @tool
@@ -42,21 +45,22 @@ def get_current_time(_input=""):
     """获取当前时间和日期"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# 5. 新闻工具
-news = NewsAPIToolWrapper(newsapi_api_key=os.getenv("NEWSAPI_KEY"))
-
-# 6. 体育工具
-sports = SportsDataAPIWrapper(sportsdata_api_key=os.getenv("SPORTSDATA_API_KEY"))
+# 5. 新闻工具（DuckDuckGo替代）
+# @tool
+# def search_news(topic: str) -> str:
+#     """获取新闻摘要（基于搜索，无需API）"""
+#     return ddg_search.run(f"latest news about {topic}")
 
 # 注册工具
 tools = [
     Tool(name="Search", func=ddg_search.run, description="用于搜索实时网络信息"),
     Tool(name="Wikipedia", func=wikipedia.run, description="查询百科信息，如术语、人物、事件等"),
-    Tool(name="Weather", func=weather.run, description="获取某地当前天气，输入地名"),
+    # Tool(name="WeatherSearch", func=search_weather, description="获取某地天气信息（无需API）"),
     Tool(name="Time", func=get_current_time, description="获取当前日期和时间"),
-    Tool(name="News", func=news.run, description="获取最新新闻摘要"),
-    Tool(name="Sports", func=sports.run, description="获取最新体育赛事信息")
+    # Tool(name="NewsSearch", func=search_news, description="获取新闻摘要（无需API）")
 ]
+
+
 
 # ===================== 初始化 Agent =====================
 llm = ChatOpenAI(
@@ -78,7 +82,7 @@ prompt = f"""
 
 请根据下方完整聊天记录，从中判断当前聊天人最可能关心的**一个具体问题**，并主动使用合适的工具（搜索、百科、天气、时间、新闻、体育）获取并解答这个问题。
 
-输出内容请使用 Markdown 格式，清晰展示：
+输出内容请严格使用 Markdown 格式，清晰展示：
 ## 问题（你判断出的需要的信息）
 ...
 
@@ -94,11 +98,11 @@ prompt = f"""
 
 # ===================== 调用 Agent 并获取 Markdown =====================
 response = agent.run(prompt)
+md_text = response.content
 
-# ===================== 保存 Markdown 文件 =====================
 if len(sys.argv) > 1:
     output_path = sys.argv[1]
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(response)
+    with open(output_path, 'w') as f:
+        f.write(md_text)
 else:
     print(response)

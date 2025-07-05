@@ -12,7 +12,7 @@ from langchain.document_loaders import YoutubeLoader
 load_dotenv()
 
 # 1. 读取聊天历史
-DB_PATH = os.path.join(os.path.dirname(__file__), '../llm/chat.db')
+DB_PATH = os.path.join(os.path.dirname(__file__), 'chat.db')
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 rows = cursor.execute("SELECT content FROM messages ORDER BY id").fetchall()
@@ -27,8 +27,10 @@ urls = set(url_pattern.findall(history))
 VECTOR_DB_PATH = os.path.join(os.path.dirname(__file__), "vector_db")
 if os.path.exists(VECTOR_DB_PATH):
     vectordb = FAISS.load_local(VECTOR_DB_PATH, OpenAIEmbeddings())
+    pass
 else:
     vectordb = FAISS.from_texts([], OpenAIEmbeddings())
+    pass
 
 # 4. 检查已收录的网址（用metadata存url）
 existing_urls = set()
@@ -51,11 +53,13 @@ for url in urls - existing_urls:
             docs = loader.load()
             for d in docs:
                 d.metadata["url"] = url
+            pass
         else:
             loader = WebBaseLoader(url)
             docs = loader.load()
             for d in docs:
                 d.metadata["url"] = url
+            pass
     except Exception as e:
         docs = [Document(page_content=f"[内容抓取失败] {url}，原因：{e}", metadata={"url": url})]
     # 分块
@@ -65,4 +69,4 @@ for url in urls - existing_urls:
     vectordb.add_documents(split_docs)
 
 # 6. 持久化向量库
-vectordb.save_local(VECTOR_DB_PATH)
+    vectordb.save_local(VECTOR_DB_PATH)

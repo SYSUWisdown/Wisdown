@@ -106,5 +106,9 @@ if len(sys.argv) > 1:
     output_path = sys.argv[1]
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(markdown)
-
-
+    # 新增：执行后输出关键信息
+    print(f"[plugin-reasoner] 已写入: {output_path}", flush=True)
+    print("[plugin-reasoner] 内容预览:", flush=True)
+    print("\n".join(markdown.splitlines()[:10]), flush=True)
+else:
+    print(markdown)

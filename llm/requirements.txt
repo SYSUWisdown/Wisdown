@@ -1,4 +1,5 @@
 langchain
+langchain_community
 openai
 faiss-cpu
 tiktoken
@@ -6,3 +7,5 @@ python-dotenv
 requests
 beautifulsoup4
 pytube
+fastapi
+uvicorn
