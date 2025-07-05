@@ -71,10 +71,10 @@
             </div>
           </div>
           <div class="uml-preview-area">
-            <div class="uml-header">
-              <h2>UML图 展示区</h2>
-              <span class="close-x" @click="closeUmlArea()">×</span>
-            </div>
+            <!-- <div class="uml-header"> -->
+            <h2>UML图 展示区</h2>
+            <span class="close-x2" @click="closeUmlArea()">×</span>
+            <!-- </div> -->
             <div class="uml-preview" v-html="showUML"></div>
           </div>          
         </div>
@@ -157,9 +157,10 @@ export default {
             name: uml.name,
             content: uml.content
           });
-          this.umlFiles.push(uml.name); // 收集所有md文件名
+          this.umlFiles.push(uml.name); // 收集所有uml文件名
         });
-        this.showUmlArea = true;
+        if (this.umlFiles.length > 0) 
+          this.showUmlArea = true;
       });
 
     // socket.io 连接和监听
@@ -465,6 +466,9 @@ button:hover {
 }
 
 .md-preview {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
   flex: 1;
   min-height: 0;
   background: #fafbfc;
@@ -501,6 +505,28 @@ button:hover {
   background: #f66;
   color: #fff;
 }
+.close-x2 {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  transform: none; /* 移除transform */
+  color: #fff;
+  background: #ff4757; /* 添加红色背景 */
+  font-size: 20px; /* 增大字体 */
+  font-weight: bold; /* 加粗 */
+  cursor: pointer;
+  padding: 6px 8px; /* 增大padding */
+  border-radius: 50%;
+  border: 2px solid #fff; /* 添加白色边框 */
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3); /* 添加阴影 */
+  transition: all 0.3s ease;
+  z-index: 100; /* 确保在最上层 */
+}
+.close-x2:hover {
+  background: #ff3742;
+  transform: scale(1.1); /* 悬停时放大 */
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.5);
+}
 
 /* UML 展示区样式 */
 .uml-editor-with-tabs {
@@ -533,6 +559,7 @@ button:hover {
   flex-direction: column;
   padding: 24px;
   min-width: 0;
+  position: relative; /* 添加相对定位 */
 }
 
 .uml-tab-btn {
@@ -574,6 +601,11 @@ button:hover {
   font-size: 16px;
   color: #222;
   border: 1px solid #eee;
+  /* 添加居中样式 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .uml-header {

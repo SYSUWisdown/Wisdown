@@ -200,7 +200,7 @@ setInterval(() => {
      FROM md_messages
      GROUP BY name
      ORDER BY last_time DESC
-     LIMIT 5`
+     LIMIT 1`
   ).all();
   const mdList = rows.map(row => [row.name, row.content]);
   const lastNames = lastMdFiles.map(item => item[0]);
@@ -220,7 +220,7 @@ setInterval(() => {
      FROM ima_messages
      GROUP BY name
      ORDER BY last_time DESC
-     LIMIT 5`
+     LIMIT 1`
   ).all();
   const umlList = umlRows.map(row => [row.name, row.content]);
   const lastUmlNames = lastUmlFiles.map(item => item[0]);
