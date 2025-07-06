@@ -1,0 +1,11 @@
+@startuml
+start
+:Prepare dough;
+:Prepare filling;
+:Roll out dough wrappers;
+:Place filling on wrapper;
+:Fold and seal dumpling;
+:Boil dumplings in water;
+:Serve dumplings;
+stop
+@enduml
