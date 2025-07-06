@@ -1,0 +1,16 @@
+@startuml
+start
+:Prepare ingredients: tomato and egg;
+:Beat the eggs in a bowl;
+:Heat oil in a pan;
+:Pour beaten eggs into the pan;
+:Scramble the eggs until half-cooked;
+:Remove eggs and set aside;
+:Add more oil to the pan;
+:Stir-fry tomatoes until soft;
+:Add scrambled eggs back to the pan;
+:Mix eggs and tomatoes together;
+:Add salt and seasoning;
+:Stir-fry for 1 more minute;
+stop
+@enduml

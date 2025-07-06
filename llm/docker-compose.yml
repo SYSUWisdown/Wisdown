@@ -3,13 +3,14 @@ services:
   llm:
     build: .
     ports:
-      - "8001:8000"
+      - "8000:8000"
     restart: always
     volumes:
-      - ../chatbox/backend/chat.db:/app/chat.db:ro
+      - ../chatbox/backend/chat.db:/app/chat.db
       - ./.env:/app/.env:ro
+      
       - ./outputs:/app/plugin_outputs
     stdin_open: true
     tty: true
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_API_KEY=sk-7016e4e4bcbc4fdeb00a1fc8b9b3b390

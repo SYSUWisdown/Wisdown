@@ -75,7 +75,9 @@
             <h2>UML图 展示区</h2>
             <span class="close-x2" @click="closeUmlArea()">×</span>
             <!-- </div> -->
-            <div class="uml-preview" v-html="showUML"></div>
+            <div class="uml-preview">
+              <img :src="showUML" style="max-width:100%;max-height:400px;" />
+            </div>
           </div>          
         </div>
         
@@ -116,7 +118,7 @@ export default {
     showUML() {
       // 查找当前激活UML文件的内容
       const uml = this.umldownContent.find(item => item.name === this.activeUml);
-      return uml ? uml.content : '';
+      return uml && uml.content ? uml.content : '';
     }
 
   },

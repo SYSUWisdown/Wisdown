@@ -73,7 +73,7 @@ async function pollLLM() {
   try {
     // debug output
     console.log('开始轮询 LLM 服务...');
-    const pyRes = await axios.post('http://localhost:8001/chat', { action: 'chat' });
+    const pyRes = await axios.post('http://localhost:8000/chat', { action: 'chat' });
     const { output_path } = pyRes.data;
     if (output_path) {
       const content = fs.readFileSync(output_path, 'utf-8');
@@ -86,7 +86,7 @@ async function pollLLM() {
     throw new Error('no output');
   } catch (e) {
     try {
-      const listRes = await axios.post('http://localhost:8001/chat', { action: 'list' });
+      const listRes = await axios.post('http://localhost:8000/chat', { action: 'list' });
       const files = listRes.data.files || [];
       if (files.length) {
         files.sort((a, b) => {
@@ -129,12 +129,12 @@ app.use(cors());
 db.prepare('INSERT INTO users (username, password_hash, is_admin, is_ai) VALUES (?, ?, ?, ?)').run('admin', '123456', 1, 0);
 
 // 新增3条测试用的md消息
-db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
-  .run(1, 'admin', 'test1.md', '# 测试MD文件1\n这是第一个测试内容 \n 666 \n \n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 999 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 888 \n\n\n 777');
-db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
-  .run(1, 'admin', 'test2.md', '# 测试MD文件2\n这是第二个测试内容');
-db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
-  .run(1, 'admin', 'test3.md', '# 测试MD文件3\n这是第三个测试内容');
+// db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
+//   .run(1, 'admin', 'test1.md', '# 测试MD文件1\n这是第一个测试内容 \n 666 \n \n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 999 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 666 \n\n 888 \n\n\n 777');
+// db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
+//   .run(1, 'admin', 'test2.md', '# 测试MD文件2\n这是第二个测试内容');
+// db.prepare('INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
+//   .run(1, 'admin', 'test3.md', '# 测试MD文件3\n这是第三个测试内容');
 
 // db.prepare('INSERT INTO ima_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)')
 //   .run(1, 'admin', 'test1.uml', '# 测试MD文件2\n这是第二个测试内容');
@@ -194,8 +194,14 @@ app.get('/api/md_messages', (req, res) => {
 app.get('/api/uml_messages', (req, res) => {
   const limit = parseInt(req.query.limit) || 20;
   const rows = db.prepare('SELECT * FROM ima_messages ORDER BY id DESC LIMIT ?').all(limit);
-  // 按时间正序返回
-  res.json(rows.reverse());
+  // 转换二进制为 base64
+  const result = rows.reverse().map(row => ({
+    ...row,
+    content: row.content
+      ? `data:image/png;base64,${Buffer.from(row.content).toString('base64')}`
+      : ''
+  }));
+  res.json(result);
 });
 
 // 聊天室 Socket.IO
@@ -283,7 +289,11 @@ setInterval(() => {
      ORDER BY last_time DESC
      LIMIT 1`
   ).all();
-  const umlList = umlRows.map(row => [row.name, row.content]);
+  // 将二进制内容转为 base64 data url
+  const umlList = umlRows.map(row => [
+    row.name,
+    row.content ? `data:image/png;base64,${Buffer.from(row.content).toString('base64')}` : ''
+  ]);
   const lastUmlNames = lastUmlFiles.map(item => item[0]);
   const currUmlNames = umlList.map(item => item[0]);
   if (

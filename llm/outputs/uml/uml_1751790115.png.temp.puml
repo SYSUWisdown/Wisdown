@@ -1,0 +1,12 @@
+@startuml
+start
+:Peel potatoes;
+:Cut potatoes into slices;
+:Heat oil in a pan;
+:Add potato slices to pan;
+:Stir-fry until golden brown;
+:Add salt and seasoning;
+:Continue stir-frying for 2 minutes;
+:Plate the dish;
+stop
+@enduml

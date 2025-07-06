@@ -1,0 +1,13 @@
+@startuml
+start
+:Prepare ingredients;
+:Peel potatoes;
+:Cut potatoes into slices;
+:Heat oil in pan;
+:Add potato slices to pan;
+:Stir-fry for 5 minutes;
+:Add salt and seasoning;
+:Continue stir-frying for 3 minutes;
+:Check if potatoes are cooked;
+stop
+@enduml

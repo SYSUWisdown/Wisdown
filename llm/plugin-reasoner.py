@@ -1,45 +1,66 @@
 import sqlite3
 import os
 import sys
+import requests
 from dotenv import load_dotenv
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
 
-# 加载环境变量
+print("[plugin-reasoner] 脚本开始执行")
 load_dotenv()
 
-# 读取聊天历史
 DB_PATH = os.path.join(os.path.dirname(__file__), 'chat.db')
+print(f"[plugin-reasoner] 读取数据库路径: {DB_PATH}")
+
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 rows = cursor.execute("SELECT username, content FROM messages ORDER BY id").fetchall()
 conn.close()
+print(f"[plugin-reasoner] 读取聊天记录条数: {len(rows)}")
+
 history = "\n".join([f"{u}: {c}" for u, c in rows])
+print(f"[plugin-reasoner] 聊天历史长度: {len(history)} 字符")
 
-# 初始化langchain大模型
-llm = ChatOpenAI(
-    temperature=0,
-    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
-    openai_api_base="https://openrouter.ai/api/v1"
+api_key = os.getenv("OPENROUTER_API_KEY")
+print(f"[plugin-reasoner] 读取 OPENROUTER_API_KEY: {'已设置' if api_key else '未设置'}")
+
+api_url = "https://api.deepseek.com/v1/chat/completions"
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+# 第一步：提取推理问题
+extract_prompt = (
+    "你是一个推理任务识别助手，擅长从对话中识别出需要推理、计算、逻辑分析或证明的问题。\n"
+    "请从下面的聊天内容中，判断是否存在需要你进行推理、证明、复杂分析或数学计算的问题。\n"
+    "如果有，请只提取那个完整问题本身（不要加入任何额外话语），如果没有，请仅返回空字符串。\n\n"
+    f"聊天内容：\n{history}"
 )
+extract_payload = {
+    "model": "deepseek-chat",
+    "messages": [
+        {"role": "system", "content": "你是一个推理任务识别助手。"},
+        {"role": "user", "content": extract_prompt}
+    ],
+    "temperature": 0
+}
 
-# 第一步：用大模型自动提取当前需要推理的问题
-extract_template = ChatPromptTemplate.from_messages([
-    ("system", "你是一个推理任务识别助手，擅长从对话中识别出需要推理、计算、逻辑分析或证明的问题。"),
-    ("user", 
-     "请从下面的聊天内容中，判断是否存在需要你进行推理、证明、复杂分析或数学计算的问题。\
-如果有，请只提取那个完整问题本身（不要加入任何额外话语），如果没有，请仅返回空字符串。\n\n聊天内容：\n{history}")
-])
-extract_chain = extract_template | llm
-extract_result = extract_chain.invoke({"history": history})
-question = extract_result.content.strip()
+print("[plugin-reasoner] 调用 DeepSeek API，提取推理问题...")
+try:
+    resp = requests.post(api_url, headers=headers, json=extract_payload, timeout=60)
+    resp.raise_for_status()
+    resp_json = resp.json()
+    print(f"[plugin-reasoner] 提取问题接口返回 keys: {list(resp_json.keys())}")
+    question = resp_json["choices"][0]["message"]["content"].strip()
+    print(f"[plugin-reasoner] 提取到的推理问题: '{question}'")
+except Exception as e:
+    print(f"[plugin-reasoner] 提取推理问题失败: {e}")
+    sys.exit(1)
 
-# 如果没有检测到推理问题，输出提示
 if not question:
     markdown = "# 当前聊天未检测到需要推理的问题。"
+    print("[plugin-reasoner] 无需推理，结束执行。")
 else:
-    # 第二步：用同一个大模型进行思维链推理，输出markdown
-
+    print("[plugin-reasoner] 发现推理问题，开始链式推理...")
     few_shot_example = (
         "下面是几个推理问题的示范，请学习其结构与推理方式：\n\n"
         "### 示例 1：证明 √2 是无理数\n"
@@ -56,7 +77,6 @@ else:
         "## 回答\n"
         "√2 是无理数。\n"
         "```\n\n"
-
         "### 示例 2：归纳法证明数列求和公式\n"
         "```\n"
         "## 推理问题\n"
@@ -72,7 +92,6 @@ else:
         "## 回答\n"
         "1 + 2 + ... + n = n(n + 1)/2 对所有正整数 n 成立。\n"
         "```\n\n"
-
         "### 示例 3：单位换算与速算\n"
         "```\n"
         "## 推理问题\n"
@@ -84,31 +103,59 @@ else:
         "这辆汽车行驶了150000米。\n"
         "```\n\n"
     )
+    cot_prompt = (
+        "你是一个严谨的逻辑推理助手，擅长解决复杂问题并展示你的推理思路。你的回答将用于展示给用户阅读，请使用结构清晰的 Markdown 输出。\n\n"
+        + few_shot_example +
+        "请使用与上述完全一致的风格和格式，解决下面的问题：\n\n"
+        f"## 推理问题\n{question}\n\n"
+        "## 思维过程\n（请详细分步推理，展示你的逻辑分析或计算过程）\n\n"
+        "## 回答\n（请总结你的最终结论）"
+    )
+    cot_payload = {
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "你是一个严谨的逻辑推理助手。"},
+            {"role": "user", "content": cot_prompt}
+        ],
+        "temperature": 0
+    }
 
-    cot_template = ChatPromptTemplate.from_messages([
-    ("system", "你是一个严谨的逻辑推理助手，擅长解决复杂问题并展示你的推理思路。你的回答将用于展示给用户阅读，请使用结构清晰的 Markdown 输出。"),
-    ("user", 
-         few_shot_example +
-         "请使用与上述完全一致的风格和格式，解决下面的问题：\n\n"
-         "## 推理问题\n"
-         "{question}\n\n"
-         "## 思维过程\n"
-         "（请详细分步推理，展示你的逻辑分析或计算过程）\n\n"
-         "## 回答\n"
-         "（请总结你的最终结论）")
-    ])
-    cot_chain = cot_template | llm
-    cot_result = cot_chain.invoke({"question": question})
-    markdown = cot_result.content.strip()
+    print("[plugin-reasoner] 调用 DeepSeek API，执行链式推理...")
+    try:
+        resp2 = requests.post(api_url, headers=headers, json=cot_payload, timeout=120)
+        resp2.raise_for_status()
+        resp2_json = resp2.json()
+        print(f"[plugin-reasoner] 链式推理接口返回 keys: {list(resp2_json.keys())}")
+        markdown = resp2_json["choices"][0]["message"]["content"].strip()
+        print(f"[plugin-reasoner] 推理结果长度: {len(markdown)} 字符")
+    except Exception as e:
+        markdown = f"# 错误\n\nDeepseek API 调用失败: {str(e)}"
+        print(f"[plugin-reasoner] 链式推理调用失败: {e}")
 
-# 输出到指定markdown文件
+# 输出到指定markdown文件或打印
 if len(sys.argv) > 1:
     output_path = sys.argv[1]
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(markdown)
-    # 新增：执行后输出关键信息
+
+    import time
+    import sqlite3
+
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+    name = f"{timestamp}.md"
+
+    conn = sqlite3.connect("chat.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO md_messages (user_id, username, name, content) VALUES (?, ?, ?, ?)",
+        (1, "admin", name, markdown)
+    )
+    conn.commit()
+    conn.close()
+
     print(f"[plugin-reasoner] 已写入: {output_path}", flush=True)
     print("[plugin-reasoner] 内容预览:", flush=True)
     print("\n".join(markdown.splitlines()[:10]), flush=True)
 else:
+    print("[plugin-reasoner] 直接输出推理结果：\n")
     print(markdown)
