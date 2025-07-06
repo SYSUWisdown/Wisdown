@@ -1,0 +1,13 @@
+@startuml
+start
+:Prepare chicken legs;
+:Clean and wash chicken legs;
+:Marinate chicken legs with spices;
+:Preheat oven to 200°C;
+:Place chicken legs on baking tray;
+:Bake for 25 minutes;
+:Check if golden brown;
+:Remove from oven;
+:Serve hot;
+stop
+@enduml

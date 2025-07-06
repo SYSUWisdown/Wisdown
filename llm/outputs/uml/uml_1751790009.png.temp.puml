@@ -1,0 +1,12 @@
+@startuml
+start
+:Prepare potatoes;
+:Peel and cut potatoes;
+:Heat oil in pan;
+:Add potatoes to pan;
+:Stir-fry until golden;
+:Add seasoning;
+:Continue stir-fry for 2 minutes;
+:Plate the dish;
+stop
+@enduml

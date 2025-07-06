@@ -1,0 +1,11 @@
+@startuml
+start
+:Prepare ingredients;
+:Wash and peel potatoes;
+:Cut potatoes into pieces;
+:Heat oil in a pan;
+:Fry potato pieces until golden;
+:Add seasoning and stir;
+:Plate and serve;
+stop
+@enduml
