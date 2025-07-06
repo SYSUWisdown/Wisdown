@@ -1,7 +1,3 @@
-in-development.md
-+42
--9
-
 # Plugin Development
 
 Wisdown supports extending both the front-end chat interface and the LLM back end with custom plugins.  This guide outlines the basic workflow for each part of the system.
